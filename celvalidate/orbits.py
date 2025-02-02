@@ -116,7 +116,7 @@ def validate_orbit_numbers(
     """Validate orbit numeric parameters"""
     match object_type:
         case "EllipticalOrbit":
-            if property_name in ("SemiMajorAxis", "Period") and token.value == 0:
+            if property_name == "Period" and token.value == 0:
                 warn(token, f"{property_name} must be non-zero")
         case "SpiceOrbit":
             match property_name:

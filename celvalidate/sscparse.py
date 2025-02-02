@@ -3,7 +3,7 @@
 
 """SSC file parsing"""
 
-from .filenames import is_texture_file
+from .filenames import is_mesh_file, is_texture_file
 from .orbits import check_orbit_properties, has_orbit
 from .parser import (
     DataType,
@@ -243,6 +243,10 @@ class SSCParser(TokenFileParser):
                 self._warn(
                     token.line, token.pos, f"Bad texture filename {token.value!r}"
                 )
+        elif property_name == "Mesh":
+            # override the check here as some add-ons use Mesh "" to switch off geometry
+            if token.value != "" and not is_mesh_file(token.value):
+                self._warn(token.line, token.pos, f"Bad mesh filename {token.value!r}")
         elif (allow_zero := _POSITIVE_PROPERTIES.get(property_name, None)) is not None:
             if token.value < 0 or (token.value == 0 and not allow_zero):
                 status = "positive or zero" if allow_zero else "strictly positive"
