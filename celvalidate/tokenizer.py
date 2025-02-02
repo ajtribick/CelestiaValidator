@@ -10,19 +10,26 @@ from io import StringIO
 from typing import Iterator, NamedTuple, NoReturn, TextIO
 
 _NAME_REGEX = re.compile(r"[A-Za-z_][0-9A-Za-z_]*")
-_NUMBER_REGEX = re.compile(r"[+\-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?")
+_NUMBER_REGEX = re.compile(
+    r"[+\-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?"
+)
+
 
 class ParsingError(Exception):
     """Represents an error generated from the tokenizer/parser"""
 
+
 class MessageLevel(IntEnum):
     """Represents the message level"""
+
     INFO = auto()
     WARN = auto()
     ERROR = auto()
 
+
 class ParsingMessage(NamedTuple):
     """Represents a parsing message"""
+
     line: int
     pos: int
     level: MessageLevel
@@ -31,15 +38,17 @@ class ParsingMessage(NamedTuple):
     def __str__(self) -> str:
         match self.level:
             case MessageLevel.INFO:
-                mtype = 'INF'
+                mtype = "INF"
             case MessageLevel.WARN:
-                mtype = 'WRN'
+                mtype = "WRN"
             case _:
-                mtype = 'ERR'
+                mtype = "ERR"
         return f"{mtype} ({self.line}:{self.pos}) {self.message}"
+
 
 class TokenKind(Enum):
     """Token types"""
+
     NAME = auto()
     BOOLEAN = auto()
     STRING = auto()
@@ -54,29 +63,28 @@ class TokenKind(Enum):
     BAR = auto()
 
     def __str__(self):
-        return super().__str__().removeprefix('TokenKind.')
+        return super().__str__().removeprefix("TokenKind.")
 
     def __repr__(self):
         type_str = super().__str__()
-        if type_str.startswith('TokenKind.'):
+        if type_str.startswith("TokenKind."):
             return type_str
         return f"TokenKind.{type_str}"
 
+
 type TokenValue = str | bool | int | float | None
+
 
 class Token:
     """Celestia catalog file token"""
+
     kind: TokenKind
     line: int
     pos: int
     value: TokenValue
 
     def __init__(
-        self,
-        kind: TokenKind,
-        line: int,
-        pos: int,
-        value: TokenValue = None
+        self, kind: TokenKind, line: int, pos: int, value: TokenValue = None
     ) -> None:
         self.kind = kind
         self.line = line
@@ -86,7 +94,7 @@ class Token:
     def __str__(self) -> str:
         if self.value is None:
             return str(self.kind)
-        return f'{self.kind}({self.value!r})'
+        return f"{self.kind}({self.value!r})"
 
     def __repr__(self) -> str:
         if self.value is None:
@@ -96,6 +104,7 @@ class Token:
 
 class Tokenizer:
     """Processes a Celestia catalog file into a series of tokens"""
+
     f: TextIO
     line: str
     pos: int
@@ -116,41 +125,43 @@ class Tokenizer:
                     self._read_line()
 
                 match self.line[self.pos]:
-                    case '\t' | ' ':
+                    case "\t" | " ":
                         self.pos += 1
-                    case '#':
+                    case "#":
                         self.pos = len(self.line)
                     case '"':
                         return self._read_string()
-                    case '{':
-                        token = Token(TokenKind.START_OBJECT, self.line_number, self.pos)
+                    case "{":
+                        token = Token(
+                            TokenKind.START_OBJECT, self.line_number, self.pos
+                        )
                         self.pos += 1
                         return token
-                    case '}':
+                    case "}":
                         token = Token(TokenKind.END_OBJECT, self.line_number, self.pos)
                         self.pos += 1
                         return token
-                    case '[':
+                    case "[":
                         token = Token(TokenKind.START_ARRAY, self.line_number, self.pos)
                         self.pos += 1
                         return token
-                    case ']':
+                    case "]":
                         token = Token(TokenKind.END_ARRAY, self.line_number, self.pos)
                         self.pos += 1
                         return token
-                    case '<':
+                    case "<":
                         token = Token(TokenKind.START_UNITS, self.line_number, self.pos)
                         self.pos += 1
                         return token
-                    case '>':
+                    case ">":
                         token = Token(TokenKind.END_UNITS, self.line_number, self.pos)
                         self.pos += 1
                         return token
-                    case '=':
+                    case "=":
                         token = Token(TokenKind.EQUALS, self.line_number, self.pos)
                         self.pos += 1
                         return token
-                    case '|':
+                    case "|":
                         token = Token(TokenKind.BAR, self.line_number, self.pos)
                         self.pos += 1
                         return token
@@ -162,9 +173,13 @@ class Tokenizer:
                             self.pos = m.end()
                             match m.group():
                                 case "false":
-                                    return Token(TokenKind.BOOLEAN, line_number, pos, False)
+                                    return Token(
+                                        TokenKind.BOOLEAN, line_number, pos, False
+                                    )
                                 case "true":
-                                    return Token(TokenKind.BOOLEAN, line_number, pos, True)
+                                    return Token(
+                                        TokenKind.BOOLEAN, line_number, pos, True
+                                    )
                                 case name:
                                     return Token(TokenKind.NAME, line_number, pos, name)
                         m = _NUMBER_REGEX.match(self.line, self.pos)
@@ -182,7 +197,9 @@ class Tokenizer:
             raise StopIteration from ex
 
     def _warn(self, message: str) -> None:
-        self.messages.append(ParsingMessage(self.line_number, self.pos, MessageLevel.WARN, message))
+        self.messages.append(
+            ParsingMessage(self.line_number, self.pos, MessageLevel.WARN, message)
+        )
 
     def _error(self, message: str) -> NoReturn:
         self.messages.append(
@@ -213,9 +230,9 @@ class Tokenizer:
                 self.pos += 1
                 if c == '"':
                     return Token(TokenKind.STRING, line_number, pos, output.getvalue())
-                if c == '\\':
+                if c == "\\":
                     c = self._parse_escape()
-                if c == '\ufffd':
+                if c == "\ufffd":
                     self._warn("Invalid UTF-8 in string literal")
                 output.write(c)
 
@@ -225,16 +242,16 @@ class Tokenizer:
         c = self.line[self.pos]
         self.pos += 1
         match c:
-            case '"' | '\\':
+            case '"' | "\\":
                 return c
-            case 'n':
-                return '\n'
-            case 'u':
+            case "n":
+                return "\n"
+            case "u":
                 start_pos = self.pos
                 self.pos += 4
                 if self.pos >= len(self.line):
                     self._error("Unterminated Unicode escape")
-                c = chr(int(self.line[start_pos:self.pos], 16)).encode('utf-8')
+                c = chr(int(self.line[start_pos : self.pos], 16)).encode("utf-8")
             case _:
                 return None
 

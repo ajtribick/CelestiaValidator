@@ -47,9 +47,23 @@ _DSO_PROPERTIES = {
 
 _GALAXY_TYPES = {
     "Irr",
-    "S0", "Sa", "Sb", "Sc", "SBa", "SBb", "SBc",
-    "E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7",
+    "S0",
+    "Sa",
+    "Sb",
+    "Sc",
+    "SBa",
+    "SBb",
+    "SBc",
+    "E0",
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5",
+    "E6",
+    "E7",
 }
+
 
 class DSCParser(TokenFileParser):
     """Parse DSC files"""
@@ -80,10 +94,14 @@ class DSCParser(TokenFileParser):
             else:
                 self._check_object(object_type, token, dso_properties)
 
-    def _validate_string(self, object_name: str, property_name: str, token: Token) -> None:
+    def _validate_string(
+        self, object_name: str, property_name: str, token: Token
+    ) -> None:
         if object_name == "Galaxy" and property_name == "Type":
             if token.value not in _GALAXY_TYPES:
-                self._warn(token.line, token.pos, f"Invalid galaxy type {token.value!r}")
+                self._warn(
+                    token.line, token.pos, f"Invalid galaxy type {token.value!r}"
+                )
         else:
             super()._validate_string(object_name, property_name, token)
 
@@ -96,15 +114,24 @@ class DSCParser(TokenFileParser):
     ) -> None:
         if "Position" in parsed_properties:
             if "RA" in parsed_properties:
-                self._warn(open_token.line, open_token.pos, "Position specified: RA ignored")
+                self._warn(
+                    open_token.line, open_token.pos, "Position specified: RA ignored"
+                )
             if "Dec" in parsed_properties:
-                self._warn(open_token.line, open_token.pos, "Position specified, Dec ignored")
+                self._warn(
+                    open_token.line, open_token.pos, "Position specified, Dec ignored"
+                )
             if "Distance" in parsed_properties:
-                self._warn(open_token.line, open_token.pos, "Position specified, Distance ignored")
+                self._warn(
+                    open_token.line,
+                    open_token.pos,
+                    "Position specified, Distance ignored",
+                )
         elif not ({"RA", "Dec", "Distance"} <= parsed_properties):
             self._warn(
-                open_token.line, open_token.pos,
-                "No position information specified, specify either RA/Dec/Distance or Position"
+                open_token.line,
+                open_token.pos,
+                "No position information specified, specify either RA/Dec/Distance or Position",
             )
         if "Radius" not in parsed_properties:
             self._warn(open_token.line, open_token.pos, "Missing Radius property")

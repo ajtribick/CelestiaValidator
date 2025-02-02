@@ -50,9 +50,12 @@ _UNIFORM_ROTATION_PROPERTIES: dict[str, PropertyDef] = {
     "AscendingNode": (DataType.NUMBER, UnitsType.ANGLE),
 }
 
-_PRECESSING_ROTATION_PROPERTIES: dict[str, PropertyDef] = _UNIFORM_ROTATION_PROPERTIES | {
-    "PrecessionPeriod": (DataType.NUMBER, UnitsType.TIME),
-}
+_PRECESSING_ROTATION_PROPERTIES: dict[str, PropertyDef] = (
+    _UNIFORM_ROTATION_PROPERTIES
+    | {
+        "PrecessionPeriod": (DataType.NUMBER, UnitsType.TIME),
+    }
+)
 
 _FIXED_ROTATION_PROPERTIES: dict[str, PropertyDef] = {
     "MeridianAngle": (DataType.NUMBER, UnitsType.ANGLE),
@@ -75,9 +78,11 @@ _ROTATION_SPECIFIC_PROPERTIES = {
     "FixedAttitude": _FIXED_ATTITUDE_PROPERTIES,
 }
 
+
 def get_rotation_properties(object_type: str) -> Optional[dict[str, PropertyDef]]:
     """Gets the property list for rotations"""
     return _ROTATION_SPECIFIC_PROPERTIES.get(object_type, None)
+
 
 def validate_rotation_strings(
     object_type: str,
@@ -99,6 +104,7 @@ def validate_rotation_strings(
             if not is_file(token.value):
                 warn(token, f"Bad filename {token.value!r}")
 
+
 def validate_rotation_numbers(
     object_type: str,
     property_name: str,
@@ -115,10 +121,9 @@ def validate_rotation_numbers(
                 if token.value < 0:
                     warn(token, "Period must be zero or positive")
 
+
 def check_rotation_properties(
-    object_type: str,
-    parsed_properties: set[str],
-    warn: Callable[[str], None]
+    object_type: str, parsed_properties: set[str], warn: Callable[[str], None]
 ) -> None:
     """Checks required parameters for rotations"""
     match object_type:

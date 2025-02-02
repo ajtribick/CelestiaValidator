@@ -69,9 +69,11 @@ _ORBIT_SPECIFIC_PROPERTIES = {
     "FixedPosition": _FIXED_POSITION_PROPERTIES,
 }
 
+
 def get_orbit_properties(object_type: str) -> Optional[dict[str, PropertyDef]]:
     """Gets the property list for orbits"""
     return _ORBIT_SPECIFIC_PROPERTIES.get(object_type, None)
+
 
 def has_orbit(parsed_properties: set[str]):
     """Checks if an orbit definition exists"""
@@ -79,6 +81,7 @@ def has_orbit(parsed_properties: set[str]):
         if prop in ORBIT_PROPERTIES:
             return True
     return False
+
 
 def validate_orbit_strings(
     object_type: str,
@@ -103,6 +106,7 @@ def validate_orbit_strings(
                     if token.value not in ("linear", "cubic"):
                         warn(token, f"Unknown Interpolation type {token.value!r}")
 
+
 def validate_orbit_numbers(
     object_type: str,
     property_name: str,
@@ -125,10 +129,9 @@ def validate_orbit_numbers(
         case _:
             pass
 
+
 def check_orbit_properties(
-    object_type: str,
-    parsed_properties: set[str],
-    warn: Callable[[str], None]
+    object_type: str, parsed_properties: set[str], warn: Callable[[str], None]
 ) -> None:
     """Checks required parameters for rotations"""
     match object_type:
@@ -169,6 +172,8 @@ def check_orbit_properties(
                 if "Planetocentric" in parsed_properties:
                     warn("Planetocentric ignored in favor of Planetographic")
             elif "Planetocentric" not in parsed_properties:
-                warn("One of Rectangular, Planetographic, or Planetocentric must be specified")
+                warn(
+                    "One of Rectangular, Planetographic, or Planetocentric must be specified"
+                )
         case _:
             pass

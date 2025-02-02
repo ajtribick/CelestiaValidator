@@ -8,20 +8,29 @@ import re
 from typing import Callable, Optional
 
 from .orbits import (
-    ORBIT_PROPERTIES, get_orbit_properties, validate_orbit_numbers, validate_orbit_strings
+    ORBIT_PROPERTIES,
+    get_orbit_properties,
+    validate_orbit_numbers,
+    validate_orbit_strings,
 )
 from .parser import DataType, PropertyDef, Token
 from .rotations import (
-    ROTATION_PROPERTIES, get_rotation_properties, validate_rotation_numbers,
+    ROTATION_PROPERTIES,
+    get_rotation_properties,
+    validate_rotation_numbers,
     validate_rotation_strings,
 )
 
-_TIMELINE_PHASE_PROPERTIES: dict[str, PropertyDef] = {
-    "OrbitFrame": (DataType.OBJECT, None),
-    "BodyFrame": (DataType.OBJECT, None),
-    "Beginning": (DataType.DATE, None),
-    "Ending": (DataType.DATE, None),
-} | ORBIT_PROPERTIES | ROTATION_PROPERTIES
+_TIMELINE_PHASE_PROPERTIES: dict[str, PropertyDef] = (
+    {
+        "OrbitFrame": (DataType.OBJECT, None),
+        "BodyFrame": (DataType.OBJECT, None),
+        "Beginning": (DataType.DATE, None),
+        "Ending": (DataType.DATE, None),
+    }
+    | ORBIT_PROPERTIES
+    | ROTATION_PROPERTIES
+)
 
 TIMELINE_PROPERTIES: dict[str, PropertyDef] = {
     "Timeline": (DataType.OBJECT_LIST, None),
@@ -72,11 +81,10 @@ _FRAME_TYPE_PROPERTIES = {
     "EquatorJ2000": _BASE_FRAME_PROPERTIES,
 }
 
-_FRAME_PROPERTIES = {
-    k: (DataType.OBJECT, None) for k in _FRAME_TYPE_PROPERTIES
-}
+_FRAME_PROPERTIES = {k: (DataType.OBJECT, None) for k in _FRAME_TYPE_PROPERTIES}
 
 _AXIS_REGEX = re.compile(r"^[+\-]?[xyz]$")
+
 
 def get_timeline_properties(object_name: str) -> Optional[dict[str, PropertyDef]]:
     """Gets the property list for timelines and reference frames"""
@@ -101,6 +109,7 @@ def get_timeline_properties(object_name: str) -> Optional[dict[str, PropertyDef]
         case _:
             return None
 
+
 def validate_timeline_numbers(
     object_type: str,
     property_name: str,
@@ -110,6 +119,7 @@ def validate_timeline_numbers(
     """Validate timeline numeric parameters"""
     validate_orbit_numbers(object_type, property_name, token, warn)
     validate_rotation_numbers(object_type, property_name, token, warn)
+
 
 def validate_timeline_strings(
     object_type: str,

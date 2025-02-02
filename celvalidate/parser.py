@@ -10,10 +10,19 @@ from enum import auto, Enum
 from typing import NoReturn, Optional, TextIO
 
 from .filenames import is_mesh_file, is_texture_file
-from .tokenizer import MessageLevel, ParsingError, ParsingMessage, Token, Tokenizer, TokenKind
+from .tokenizer import (
+    MessageLevel,
+    ParsingError,
+    ParsingMessage,
+    Token,
+    Tokenizer,
+    TokenKind,
+)
+
 
 class DataType(Enum):
     """Property map data types"""
+
     BOOLEAN = auto()
     NUMBER = auto()
     VECTOR = auto()
@@ -27,13 +36,16 @@ class DataType(Enum):
     VECTOR_OR_OBJECT = auto()
     COLOR = auto()
 
+
 class UnitsType(Enum):
     """Property map units types"""
+
     LENGTH = auto()
     TIME = auto()
     ANGLE = auto()
     MASS = auto()
     SPHERICAL = auto()
+
 
 _UNIT_TYPES = {
     # length units
@@ -211,11 +223,14 @@ _X11_COLORS = {
 
 _COLOR_REGEX = re.compile(r"^#[0-9a-fA-F]{3,8}$")
 
+
 class Disposition(Enum):
     """Disposition"""
+
     ADD = auto()
     MODIFY = auto()
     REPLACE = auto()
+
 
 type PropertyDef = tuple[DataType, Optional[UnitsType]]
 
@@ -232,20 +247,20 @@ _NORMAL_REGEX = re.compile(
     re.VERBOSE,
 )
 
+
 def _check_date_string(date_str: str) -> bool:
-    if (
-        (match := _ISO_DATE_REGEX.match(date_str)) is None and
-        (match := _NORMAL_REGEX.match(date_str)) is None
-    ):
+    if (match := _ISO_DATE_REGEX.match(date_str)) is None and (
+        match := _NORMAL_REGEX.match(date_str)
+    ) is None:
         return False
 
     try:
-        year = int(match['year'])
-        month = int(match['month'])
+        year = int(match["year"])
+        month = int(match["month"])
         if month < 1 or month > 12:
             return False
 
-        day = int(match['day'])
+        day = int(match["day"])
         if day < 1:
             return False
 
@@ -254,7 +269,7 @@ def _check_date_string(date_str: str) -> bool:
                 month_days = 29
             else:
                 month_days = 28
-        elif month in (4,6,9,11):
+        elif month in (4, 6, 9, 11):
             month_days = 30
         else:
             month_days = 31
@@ -262,16 +277,16 @@ def _check_date_string(date_str: str) -> bool:
         if day > month_days:
             return False
 
-        if match['hour'] is not None:
-            hour = int(match['hour'])
+        if match["hour"] is not None:
+            hour = int(match["hour"])
             if hour < 0 or hour >= 24:
                 return False
-            minute = int(match['minute'])
+            minute = int(match["minute"])
             if minute < 0 or minute >= 60:
                 return False
 
-            if match['second'] is not None:
-                second = float(match['second'])
+            if match["second"] is not None:
+                second = float(match["second"])
                 if second < 0 or second >= 60:
                     return False
     except ValueError:
@@ -349,7 +364,11 @@ class TokenFileParser(ABC):
         while struct_stack:
             token = self._next_token()
             match token.kind:
-                case TokenKind.START_OBJECT | TokenKind.START_ARRAY | TokenKind.START_UNITS:
+                case (
+                    TokenKind.START_OBJECT
+                    | TokenKind.START_ARRAY
+                    | TokenKind.START_UNITS
+                ):
                     struct_stack.append(token.kind)
                 case TokenKind.END_OBJECT:
                     if struct_stack.pop() != TokenKind.START_OBJECT:
@@ -390,7 +409,9 @@ class TokenFileParser(ABC):
                 case TokenKind.NAME:
                     unit_type = _UNIT_TYPES.get(token.value, None)
                     if unit_type is None:
-                        self._warn(token.line, token.pos, f"Unknown unit type {token.value}")
+                        self._warn(
+                            token.line, token.pos, f"Unknown unit type {token.value}"
+                        )
                     elif unit_type == UnitsType.ANGLE:
                         if has_angle_unit:
                             self._warn(token.line, token.pos, "Duplicate angle unit")
@@ -403,7 +424,9 @@ class TokenFileParser(ABC):
                             has_length_unit = True
                     else:
                         self._warn(
-                            token.line, token.pos, f"Unexpected unit type {token.value} ignored"
+                            token.line,
+                            token.pos,
+                            f"Unexpected unit type {token.value} ignored",
                         )
                 case TokenKind.END_UNITS:
                     break
@@ -411,7 +434,9 @@ class TokenFileParser(ABC):
                     self._warn(token.line, token.pos, "Unexpected array in units block")
                     self._skip_structure(token.kind)
                 case TokenKind.START_OBJECT:
-                    self._warn(token.line, token.pos, "Unexpected object in units block")
+                    self._warn(
+                        token.line, token.pos, "Unexpected object in units block"
+                    )
                     self._skip_structure(token.kind)
                 case TokenKind.START_UNITS:
                     self._warn(token.line, token.pos, "Unexpected nested units block")
@@ -437,10 +462,14 @@ class TokenFileParser(ABC):
                 case TokenKind.NAME:
                     actual_units = _UNIT_TYPES.get(token.value, None)
                     if actual_units is None:
-                        self._warn(token.line, token.pos, f"Unknown unit type {token.value}")
+                        self._warn(
+                            token.line, token.pos, f"Unknown unit type {token.value}"
+                        )
                     elif actual_units != expected_units:
                         self._warn(
-                            token.line, token.pos, f"Unexpected unit type {token.value} ignored"
+                            token.line,
+                            token.pos,
+                            f"Unexpected unit type {token.value} ignored",
                         )
                     elif has_unit:
                         self._warn(token.line, token.pos, "Multiple units found")
@@ -452,7 +481,9 @@ class TokenFileParser(ABC):
                     self._warn(token.line, token.pos, "Unexpected array in units block")
                     self._skip_structure(token.kind)
                 case TokenKind.START_OBJECT:
-                    self._warn(token.line, token.pos, "Unexpected object in units block")
+                    self._warn(
+                        token.line, token.pos, "Unexpected object in units block"
+                    )
                     self._skip_structure(token.kind)
                 case TokenKind.START_UNITS:
                     self._warn(token.line, token.pos, "Unexpected nested units block")
@@ -464,7 +495,9 @@ class TokenFileParser(ABC):
         if not has_unit:
             self._warn(token.line, token.pos, "Empty unit block")
 
-    def _check_vector(self, property_name: str, element_count: int | tuple[int, int]) -> None:
+    def _check_vector(
+        self, property_name: str, element_count: int | tuple[int, int]
+    ) -> None:
         num_elements = 0
         while True:
             token = self._next_token()
@@ -481,21 +514,23 @@ class TokenFileParser(ABC):
                     self._warn(token.line, token.pos, "Unexpected sub-object in vector")
                     self._skip_structure(token.kind)
                 case TokenKind.START_UNITS:
-                    self._warn(token.line, token.pos, "Unexpected units block in vector")
+                    self._warn(
+                        token.line, token.pos, "Unexpected units block in vector"
+                    )
                     self._skip_structure(token.kind)
                 case TokenKind.END_OBJECT | TokenKind.END_UNITS:
                     self._error(token.line, token.pos, "Mismatched nesting")
                 case _:
                     self._warn(token.line, token.pos, "Non-numeric token in vector")
-        if (
-            (isinstance(element_count, int) and num_elements == element_count) or
-            (element_count[0] <= num_elements <= element_count[1])
+        if (isinstance(element_count, int) and num_elements == element_count) or (
+            element_count[0] <= num_elements <= element_count[1]
         ):
             return
 
         self._warn(
-            token.line, token.pos,
-            f"Expected {element_count} elements in vector, found {num_elements}"
+            token.line,
+            token.pos,
+            f"Expected {element_count} elements in vector, found {num_elements}",
         )
 
     def _check_string_list(self, property_name: str) -> None:
@@ -507,13 +542,19 @@ class TokenFileParser(ABC):
                 case TokenKind.END_ARRAY:
                     break
                 case TokenKind.START_ARRAY:
-                    self._warn(token.line, token.pos, "Unexpected sub-array in string list")
+                    self._warn(
+                        token.line, token.pos, "Unexpected sub-array in string list"
+                    )
                     self._skip_structure(token.kind)
                 case TokenKind.START_OBJECT:
-                    self._warn(token.line, token.pos, "Unexpected sub-object in string list")
+                    self._warn(
+                        token.line, token.pos, "Unexpected sub-object in string list"
+                    )
                     self._skip_structure(token.kind)
                 case TokenKind.START_UNITS:
-                    self._warn(token.line, token.pos, "Unexpected units block in string list")
+                    self._warn(
+                        token.line, token.pos, "Unexpected units block in string list"
+                    )
                     self._skip_structure(token.kind)
                 case TokenKind.END_OBJECT | TokenKind.END_UNITS:
                     self._error(token.line, token.pos, "Mismatched nesting")
@@ -529,10 +570,14 @@ class TokenFileParser(ABC):
         match property_name:
             case "Mesh":
                 if not is_mesh_file(token.value):
-                    self._warn(token.line, token.pos, f"Bad mesh filename {token.value!r}")
+                    self._warn(
+                        token.line, token.pos, f"Bad mesh filename {token.value!r}"
+                    )
             case "Texture":
                 if not is_texture_file(token.value):
-                    self._warn(token.line, token.pos, f"Bad texture filename {token.value!r}")
+                    self._warn(
+                        token.line, token.pos, f"Bad texture filename {token.value!r}"
+                    )
             case _:
                 pass
 
@@ -545,17 +590,25 @@ class TokenFileParser(ABC):
         match property_name:
             case "Radius" | "Temperature" | "Mass":
                 if token.value <= 0:
-                    self._warn(token.line, token.pos, f"{property_name} must be strictly positive")
+                    self._warn(
+                        token.line,
+                        token.pos,
+                        f"{property_name} must be strictly positive",
+                    )
             case "[]":
                 if object_name == "__color":
                     if token.value < 0 or token.value > 1:
                         self._warn(
-                            token.line, token.pos, "Color elements must be in range [0, 1]"
+                            token.line,
+                            token.pos,
+                            "Color elements must be in range [0, 1]",
                         )
                 if object_name == "SemiAxes":
                     if token.value <= 0:
                         self._warn(
-                            token.line, token.pos, "SemiAxes element must be strictly positive"
+                            token.line,
+                            token.pos,
+                            "SemiAxes element must be strictly positive",
                         )
             case _:
                 pass
@@ -588,48 +641,65 @@ class TokenFileParser(ABC):
             case DataType.BOOLEAN:
                 if token.kind != TokenKind.BOOLEAN:
                     is_match = False
-                    self._warn(token.line, token.pos, f"Expected a boolean for {property_name}")
+                    self._warn(
+                        token.line, token.pos, f"Expected a boolean for {property_name}"
+                    )
             case DataType.NUMBER:
                 if token.kind == TokenKind.NUMBER:
                     self._validate_number(object_name, property_name, token)
                 else:
                     is_match = False
-                    self._warn(token.line, token.pos, f"Expected a number for {property_name}")
+                    self._warn(
+                        token.line, token.pos, f"Expected a number for {property_name}"
+                    )
             case DataType.VECTOR:
                 if token.kind == TokenKind.START_ARRAY:
                     self._check_vector(property_name, 3)
                 else:
                     is_match = False
-                    self._warn(token.line, token.pos, f"Expected a vector for {property_name}")
+                    self._warn(
+                        token.line, token.pos, f"Expected a vector for {property_name}"
+                    )
             case DataType.QUATERNION:
                 if token.kind == TokenKind.START_ARRAY:
                     self._check_vector(property_name, 4)
                 else:
                     is_match = False
-                    self._warn(token.line, token.pos, f"Expected a quaternion for {property_name}")
+                    self._warn(
+                        token.line,
+                        token.pos,
+                        f"Expected a quaternion for {property_name}",
+                    )
             case DataType.STRING:
                 if token.kind == TokenKind.STRING:
                     self._validate_string(object_name, property_name, token)
                 else:
                     is_match = False
-                    self._warn(token.line, token.pos, f"Expected a string for {property_name}")
+                    self._warn(
+                        token.line, token.pos, f"Expected a string for {property_name}"
+                    )
             case DataType.OBJECT:
                 if token.kind == TokenKind.START_OBJECT:
                     properties = self._get_properties(property_name)
                     self._check_object(property_name, token, properties)
                 else:
                     is_match = False
-                    self._warn(token.line, token.pos, f"Expected an object for {property_name}")
+                    self._warn(
+                        token.line, token.pos, f"Expected an object for {property_name}"
+                    )
             case DataType.DATE:
                 if token.kind == TokenKind.STRING:
                     if not _check_date_string(token.value):
                         self._warn(
-                            token.line, token.pos, f"Invalid date string for {property_name}"
+                            token.line,
+                            token.pos,
+                            f"Invalid date string for {property_name}",
                         )
                 elif token.kind != TokenKind.NUMBER:
                     is_match = False
                     self._warn(
-                        token.line, token.pos,
+                        token.line,
+                        token.pos,
                         f"Expected either number or date string for {property_name}",
                     )
             case DataType.NUMBER_OR_STRING:
@@ -640,7 +710,8 @@ class TokenFileParser(ABC):
                 else:
                     is_match = False
                     self._warn(
-                        token.line, token.pos,
+                        token.line,
+                        token.pos,
                         f"Expected either number or string for {property_name}",
                     )
             case DataType.STRING_LIST:
@@ -649,7 +720,8 @@ class TokenFileParser(ABC):
                 elif token.kind != TokenKind.STRING:
                     is_match = False
                     self._warn(
-                        token.line, token.pos,
+                        token.line,
+                        token.pos,
                         f"Expected either string or string list for {property_name}",
                     )
             case DataType.OBJECT_LIST:
@@ -670,20 +742,22 @@ class TokenFileParser(ABC):
                 else:
                     is_match = False
                     self._warn(
-                        token.line, token.pos,
+                        token.line,
+                        token.pos,
                         f"Expected either vector or object for {property_name}",
                     )
             case DataType.COLOR:
                 if token.kind == TokenKind.STRING:
                     if not (
-                        token.value in _X11_COLORS or
-                        (
-                            len(token.value) in (4, 7, 9) and
-                            _COLOR_REGEX.match(token.value) is not None
+                        token.value in _X11_COLORS
+                        or (
+                            len(token.value) in (4, 7, 9)
+                            and _COLOR_REGEX.match(token.value) is not None
                         )
                     ):
                         self._warn(
-                            token.line, token.pos,
+                            token.line,
+                            token.pos,
                             f"Could not parse {token.value!r} as a valid color",
                         )
                 elif token.kind == TokenKind.START_ARRAY:
@@ -691,7 +765,8 @@ class TokenFileParser(ABC):
                 else:
                     is_match = False
                     self._warn(
-                        token.line, token.pos,
+                        token.line,
+                        token.pos,
                         f"Expected either color vector or string for {property_name}",
                     )
 
@@ -716,16 +791,22 @@ class TokenFileParser(ABC):
             match token.kind:
                 case TokenKind.NAME:
                     if token.value in parsed_properties:
-                        self._warn(token.line, token.pos, f"Duplicate property {token.value}")
+                        self._warn(
+                            token.line, token.pos, f"Duplicate property {token.value}"
+                        )
                     else:
                         parsed_properties.add(token.value)
                     try:
                         data_type, unit_type = properties[token.value]
                     except KeyError:
-                        self._warn(token.line, token.pos, f"Unknown property {token.value}")
+                        self._warn(
+                            token.line, token.pos, f"Unknown property {token.value}"
+                        )
                         self._skip_value()
                     else:
-                        self._check_value(object_name, token.value, data_type, unit_type)
+                        self._check_value(
+                            object_name, token.value, data_type, unit_type
+                        )
                 case TokenKind.END_OBJECT:
                     break
                 case TokenKind.END_ARRAY | TokenKind.END_UNITS:
@@ -736,7 +817,9 @@ class TokenFileParser(ABC):
                     self._skip_value()
         self._check_properties(object_name, open_token, parsed_properties, disposition)
 
-    def _check_object_list(self, object_name: str, properties: dict[str, PropertyDef]) -> None:
+    def _check_object_list(
+        self, object_name: str, properties: dict[str, PropertyDef]
+    ) -> None:
         while True:
             token = self._next_token()
             match token.kind:

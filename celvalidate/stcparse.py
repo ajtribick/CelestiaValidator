@@ -6,13 +6,20 @@
 import re
 
 from .orbits import (
-    ORBIT_PROPERTIES, check_orbit_properties, get_orbit_properties, has_orbit,
-    validate_orbit_numbers, validate_orbit_strings,
+    ORBIT_PROPERTIES,
+    check_orbit_properties,
+    get_orbit_properties,
+    has_orbit,
+    validate_orbit_numbers,
+    validate_orbit_strings,
 )
 from .parser import DataType, Disposition, PropertyDef, TokenFileParser, UnitsType
 from .rotations import (
-    ROTATION_PROPERTIES, check_rotation_properties, get_rotation_properties,
-    validate_rotation_numbers, validate_rotation_strings,
+    ROTATION_PROPERTIES,
+    check_rotation_properties,
+    get_rotation_properties,
+    validate_rotation_numbers,
+    validate_rotation_strings,
 )
 from .tokenizer import Token, TokenKind
 
@@ -25,19 +32,23 @@ _COMMON_PROPERTIES: dict[str, PropertyDef] = {
     "Category": (DataType.STRING_LIST, None),
 } | ORBIT_PROPERTIES
 
-_STAR_PROPERTIES: dict[str, PropertyDef] = {
-    "SpectralType": (DataType.STRING, None),
-    "AppMag": (DataType.NUMBER, None),
-    "AbsMag": (DataType.NUMBER, None),
-    "Extinction": (DataType.NUMBER, None),
-    "Temperature": (DataType.NUMBER, None),
-    "BoloCorrection": (DataType.NUMBER, None),
-    "Mesh": (DataType.STRING, None),
-    "Texture": (DataType.STRING, None),
-    "SemiAxes": (DataType.VECTOR, UnitsType.LENGTH),
-    "Radius": (DataType.NUMBER, UnitsType.LENGTH),
-    "InfoURL": (DataType.STRING, None),
-} | _COMMON_PROPERTIES | ROTATION_PROPERTIES
+_STAR_PROPERTIES: dict[str, PropertyDef] = (
+    {
+        "SpectralType": (DataType.STRING, None),
+        "AppMag": (DataType.NUMBER, None),
+        "AbsMag": (DataType.NUMBER, None),
+        "Extinction": (DataType.NUMBER, None),
+        "Temperature": (DataType.NUMBER, None),
+        "BoloCorrection": (DataType.NUMBER, None),
+        "Mesh": (DataType.STRING, None),
+        "Texture": (DataType.STRING, None),
+        "SemiAxes": (DataType.VECTOR, UnitsType.LENGTH),
+        "Radius": (DataType.NUMBER, UnitsType.LENGTH),
+        "InfoURL": (DataType.STRING, None),
+    }
+    | _COMMON_PROPERTIES
+    | ROTATION_PROPERTIES
+)
 
 _OBJ_PROPERTIES = {
     "Star": _STAR_PROPERTIES,
@@ -52,7 +63,9 @@ _SPTYPE_REGEX = re.compile(
           ([0-9](\.[0-9])?)?
           (?P<lumtype>VI?|I(-?a0?|a-?0|-?b|V|I{0,2}))?
         )""",
-    re.VERBOSE)
+    re.VERBOSE,
+)
+
 
 class STCParser(TokenFileParser):
     """Parse STC files"""
@@ -84,7 +97,9 @@ class STCParser(TokenFileParser):
                     object_type = token.value
                     token = self._next_token()
                 else:
-                    self._error(token.line, token.pos, f"Unknown stc object type {token.value}")
+                    self._error(
+                        token.line, token.pos, f"Unknown stc object type {token.value}"
+                    )
 
             has_id = False
             if token.kind == TokenKind.NUMBER:
@@ -113,17 +128,23 @@ class STCParser(TokenFileParser):
             return properties
         return super()._get_properties(object_name)
 
-    def _validate_string(self, object_name: str, property_name: str, token: Token) -> None:
+    def _validate_string(
+        self, object_name: str, property_name: str, token: Token
+    ) -> None:
         if property_name == "SpectralType":
             self._validate_sptype(token)
         else:
             validate_orbit_strings(
-                object_name, property_name, token,
-                lambda tok, msg: self._warn(tok.line, tok.pos, msg)
+                object_name,
+                property_name,
+                token,
+                lambda tok, msg: self._warn(tok.line, tok.pos, msg),
             )
             validate_rotation_strings(
-                object_name, property_name, token,
-                lambda tok, msg: self._warn(tok.line, tok.pos, msg)
+                object_name,
+                property_name,
+                token,
+                lambda tok, msg: self._warn(tok.line, tok.pos, msg),
             )
             super()._validate_string(object_name, property_name, token)
 
@@ -132,34 +153,49 @@ class STCParser(TokenFileParser):
             self._warn(token.line, token.pos, f"Invalid spectral type {token.value!r}")
             return
 
-        if (wdtype := match['wdtype']) is not None and len(wdtype) == 2 and wdtype[0] == wdtype[1]:
+        if (
+            (wdtype := match["wdtype"]) is not None
+            and len(wdtype) == 2
+            and wdtype[0] == wdtype[1]
+        ):
             self._warn(
-                token.line, token.pos, f"Spectral type {token.value!r} has duplicate extended type"
+                token.line,
+                token.pos,
+                f"Spectral type {token.value!r} has duplicate extended type",
             )
 
         if (
-            match['lumprefix'] is not None and
-            match['lumtype'] is not None and match['lumtype'] != 'VI'
+            match["lumprefix"] is not None
+            and match["lumtype"] is not None
+            and match["lumtype"] != "VI"
         ):
             self._warn(
-                token.line, token.pos,
+                token.line,
+                token.pos,
                 f"Spectral type {token.value!r} has mismatched luminosity types",
             )
 
         if match.end() != len(token.value):
             self._info(
-                token.line, token.pos,
+                token.line,
+                token.pos,
                 f"Ignoring spectral type suffix on {token.value!r}: using {match[0]!r}",
             )
 
-    def _validate_number(self, object_name: str, property_name: str, token: Token) -> None:
+    def _validate_number(
+        self, object_name: str, property_name: str, token: Token
+    ) -> None:
         validate_orbit_numbers(
-            object_name, property_name, token,
-            lambda tok, msg: self._warn(tok.line, tok.pos, msg)
+            object_name,
+            property_name,
+            token,
+            lambda tok, msg: self._warn(tok.line, tok.pos, msg),
         )
         validate_rotation_numbers(
-            object_name, property_name, token,
-            lambda tok, msg: self._warn(tok.line, tok.pos, msg)
+            object_name,
+            property_name,
+            token,
+            lambda tok, msg: self._warn(tok.line, tok.pos, msg),
         )
         super()._validate_number(object_name, property_name, token)
 
@@ -174,46 +210,63 @@ class STCParser(TokenFileParser):
             if "OrbitBarycenter" in parsed_properties:
                 if "Position" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos,
+                        open_token.line,
+                        open_token.pos,
                         "Position ignored in favor of OrbitBarycenter",
                     )
                 if "RA" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "RA ignored in favor of OrbitBarycenter"
+                        open_token.line,
+                        open_token.pos,
+                        "RA ignored in favor of OrbitBarycenter",
                     )
                 if "Dec" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "Dec ignored in favor of OrbitBarycenter"
+                        open_token.line,
+                        open_token.pos,
+                        "Dec ignored in favor of OrbitBarycenter",
                     )
                 if "Distance" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos,
+                        open_token.line,
+                        open_token.pos,
                         "Distance ignored in favor of OrbitBarycenter",
                     )
                 if not has_orbit(parsed_properties):
                     self._warn(
-                        open_token.line, open_token.pos, "OrbitBarycenter specified without Orbit"
+                        open_token.line,
+                        open_token.pos,
+                        "OrbitBarycenter specified without Orbit",
                     )
             elif has_orbit(parsed_properties):
                 self._warn(
-                    open_token.line, open_token.pos, "Orbit specified without OrbitBarycenter"
+                    open_token.line,
+                    open_token.pos,
+                    "Orbit specified without OrbitBarycenter",
                 )
             elif "Position" in parsed_properties:
                 if "RA" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "RA ignored in favor of Position"
+                        open_token.line,
+                        open_token.pos,
+                        "RA ignored in favor of Position",
                     )
                 if "Dec" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "Dec ignored in favor of Position"
+                        open_token.line,
+                        open_token.pos,
+                        "Dec ignored in favor of Position",
                     )
                 if "Distance" in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "Distance ignored in favor of Position"
+                        open_token.line,
+                        open_token.pos,
+                        "Distance ignored in favor of Position",
                     )
             elif not {"RA", "Dec", "Distance"} <= parsed_properties:
                 self._warn(
-                    open_token.line, open_token.pos,
+                    open_token.line,
+                    open_token.pos,
                     "One of OrbitBarycenter, Position, or (RA, Dec, Distance) must be specified",
                 )
 
@@ -221,22 +274,30 @@ class STCParser(TokenFileParser):
                 if "AbsMag" in parsed_properties:
                     if "AppMag" in parsed_properties:
                         self._warn(
-                            open_token.line, open_token.pos, "AppMag ignored in favor of AbsMag"
+                            open_token.line,
+                            open_token.pos,
+                            "AppMag ignored in favor of AbsMag",
                         )
                 elif "AppMag" not in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "One of AppMag or AbsMag must be specified"
+                        open_token.line,
+                        open_token.pos,
+                        "One of AppMag or AbsMag must be specified",
                     )
                 if "SpectralType" not in parsed_properties:
                     self._warn(
-                        open_token.line, open_token.pos, "Spectral type must be specified"
+                        open_token.line,
+                        open_token.pos,
+                        "Spectral type must be specified",
                     )
 
         check_rotation_properties(
-            object_name, parsed_properties,
+            object_name,
+            parsed_properties,
             lambda msg: self._warn(open_token.line, open_token.pos, msg),
         )
         check_orbit_properties(
-            object_name, parsed_properties,
+            object_name,
+            parsed_properties,
             lambda msg: self._warn(open_token.line, open_token.pos, msg),
         )
