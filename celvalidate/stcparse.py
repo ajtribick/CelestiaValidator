@@ -30,6 +30,7 @@ _COMMON_PROPERTIES: dict[str, PropertyDef] = {
     "Distance": (DataType.NUMBER, UnitsType.LENGTH),
     "OrbitBarycenter": (DataType.NUMBER_OR_STRING, None),
     "Category": (DataType.STRING_LIST, None),
+    "InfoURL": (DataType.STRING, None),
 } | ORBIT_PROPERTIES
 
 _STAR_PROPERTIES: dict[str, PropertyDef] = (
@@ -44,7 +45,6 @@ _STAR_PROPERTIES: dict[str, PropertyDef] = (
         "Texture": (DataType.STRING, None),
         "SemiAxes": (DataType.VECTOR, UnitsType.LENGTH),
         "Radius": (DataType.NUMBER, UnitsType.LENGTH),
-        "InfoURL": (DataType.STRING, None),
     }
     | _COMMON_PROPERTIES
     | ROTATION_PROPERTIES
