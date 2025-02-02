@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2025 Andrew Tribick
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+version = 1
+
+[[annotations]]
+path = [
+    "README.md",
+    ".github/**",
+]
+SPDX-FileCopyrightText = "2025 Andrew Tribick"
+SPDX-License-Identifier = "GPL-2.0-or-later"
