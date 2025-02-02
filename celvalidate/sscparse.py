@@ -236,7 +236,7 @@ class SSCParser(TokenFileParser):
         self, object_name: str, property_name: str, token: Token
     ) -> None:
         if property_name == "Class":
-            if token.value not in _CATEGORIES:
+            if token.value.casefold() not in _CATEGORIES:
                 self._warn(token.line, token.pos, f"Unknown class type {token.value!r}")
         elif property_name in _TEXTURE_PROPERTIES:
             if not is_texture_file(token.value):
