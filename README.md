@@ -1,5 +1,9 @@
 # Celestia syntax validator
 
+> [!IMPORTANT]
+> Development of this repository has moved to
+> [Codeberg](https://codeberg.org/pelagornithid/CelestiaValidator)
+
 A Python utility for validating the syntax of Celestiaʼs
 Deep Sky Catalog (.dsc), Solar System Catalog (.ssc) and
 Star Catalog (.stc) files. The syntax is based on the supported features in
